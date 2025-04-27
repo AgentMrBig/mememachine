@@ -29,7 +29,7 @@ Saved to: C:\…\output\meme_4721.jpg
 | **Python 3.9+** | Runs the script | <https://python.org> |
 | **OpenAI API key** | Access DALL·E 3 | <https://platform.openai.com> |
 
-> **Font:** Drop `Impact.ttf` (or Google’s `Anton-Regular.ttf`) in the same folder as the script for proper meme text styling.
+> **Font:** Drop `Anton.ttf` in the same folder as the script for proper meme text styling.
 
 ---
 
