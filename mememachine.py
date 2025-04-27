@@ -7,6 +7,7 @@ import io
 import os
 import random
 import requests
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from openai import OpenAI
 
@@ -18,8 +19,11 @@ CAPTIONS = [
     "When AI writes your code",
     "99 problems but a bug ain't one",
 ]
-OUTPUT_DIR = "output"  # all memes will be saved here
-PNG_SIZE = (1024, 1024)  # required by create_variation
+OUTPUT_DIR = "output"          # finished memes land here
+PNG_SIZE = (1024, 1024)        # required by create_variation
+FONT_FILE = "Anton.ttf"        # put the TTF beside this script
+TOP_MARGIN_RATIO = 0.10        # 10 % of image height
+BOTTOM_MARGIN_RATIO = 0.12     # 12 % of image height
 
 # ------------------------------------------------------------------
 # STEP 1 – DOWNLOAD TEMPLATE
@@ -31,7 +35,7 @@ template = Image.open(io.BytesIO(img_bytes)).convert("RGB")
 # STEP 2 – REMIX WITH DALL·E 3 (PNG ≤ 4 MB)
 # ------------------------------------------------------------------
 png_buffer = io.BytesIO()
-template.thumbnail(PNG_SIZE)            # resize in-place to 1024×1024
+template.thumbnail(PNG_SIZE)            # resize to 1024×1024
 template.save(png_buffer, format="PNG")  # convert to PNG
 png_bytes = png_buffer.getvalue()
 
@@ -50,22 +54,42 @@ remix_img = Image.open(
 # ------------------------------------------------------------------
 # STEP 3 – ADD CAPTIONS WITH PILLOW
 # ------------------------------------------------------------------
-draw = ImageDraw.Draw(remix_img)
-font = ImageFont.truetype("Anton.ttf", 80)
 w, h = remix_img.size
+dynamic_font_size = int(h * 0.06)  # text at ~6 % of image height
 
-y = 40  # initial Y for top text
-for caption in CAPTIONS:               # top then bottom
-    draw.text(
-        (w // 2, y),
-        caption,
-        font=font,
-        fill="white",
-        stroke_width=3,
-        stroke_fill="black",
-        anchor="ms",                   # middle-center anchor
-    )
-    y = h - 120                        # move to bottom for second line
+# build absolute path to font file
+font_path = Path(__file__).parent / FONT_FILE
+try:
+    font = ImageFont.truetype(str(font_path), dynamic_font_size)
+except OSError:
+    print("Custom font not found; using default Pillow font.")
+    font = ImageFont.load_default()
+
+draw = ImageDraw.Draw(remix_img)
+
+# top caption
+y_top = int(h * TOP_MARGIN_RATIO)
+draw.text(
+    (w // 2, y_top),
+    CAPTIONS[0],
+    font=font,
+    fill="white",
+    stroke_width=3,
+    stroke_fill="black",
+    anchor="ms",
+)
+
+# bottom caption
+y_bottom = h - int(h * BOTTOM_MARGIN_RATIO)
+draw.text(
+    (w // 2, y_bottom),
+    CAPTIONS[1],
+    font=font,
+    fill="white",
+    stroke_width=3,
+    stroke_fill="black",
+    anchor="ms",
+)
 
 # ------------------------------------------------------------------
 # STEP 4 – SAVE OUTPUT
